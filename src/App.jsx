@@ -1,0 +1,171 @@
+import { useState, useEffect } from 'react'
+import { WeatherDisplay } from "./components/WeatherDisplay.jsx";
+import { SearchBar } from "./components/SearchBar.jsx";
+
+// Импортируем наши картинки
+import bgDayWinter from './bg-photo/winter_village_day.jpg';
+import bgNightWinter from './bg-photo/winter_ascent_night.jpg';
+import bgDayAutumn from './bg-photo/autumn_day.jpg';
+import bgNightAutumn from './bg-photo/autumn_sunset_night.jpg';
+import bgDaySummer from './bg-photo/summer_azul_day.jpg';
+import bgNightSummer from './bg-photo/summer_zuleta_night.jpg';
+import bgDaySpring from './bg-photo/spring_tulips_day.jpg';
+import bgNightSpring from './bg-photo/spring_rainbow_night.jpg';
+
+import bgDefault from './bg-photo/default_bliss.jpg';
+
+function App() {
+    const [city, setCity] = useState("Moscow");
+    const [weather, setWeather] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [hasError, setHasError] = useState(false);
+    const [hasErrorCity, setHasErrorCity] = useState(false);
+
+    const fetchWeather = (searchQuery) => {
+        setIsLoading(true);
+
+        fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${searchQuery}&count=1&language=en&format=json`)
+            .then(res => {
+                if (!res.ok) {
+                    throw Error('Error geolocation');
+                }
+                return res.json()
+            })
+            .then(geoData => {
+                if (!geoData.results || geoData.results.length === 0) {
+                    throw new Error('City not found');
+                }
+
+                const lat = geoData.results[0].latitude;
+                const long = geoData.results[0].longitude;
+
+                return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m,is_day,wind_speed_10m,weathercode`);
+            })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Ошибка HTTP: ' + res.status);
+                }
+                return res.json()
+            })
+            .then(data => {
+                console.log(data);
+                setCity(searchQuery);
+                setWeather(data.current);
+                setIsLoading(false);
+            })
+            .catch(error => {
+                console.log("Поймали ошибку:", error);
+                if (error.message === 'City not found') {
+                    // Если город не найден - показываем плашку на 3 секунды
+                    setHasErrorCity(true);
+                    setTimeout(() => {
+                        setHasErrorCity(false)
+                    }, 2000);
+                } else {
+                    // Если упал интернет или API - показываем критический красный экран
+                    setHasError(true);
+                }
+                setIsLoading(false);
+            })
+    }
+
+    useEffect(() => {
+        fetchWeather("Moscow");
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div
+                className="relative w-full h-full box-border flex items-center justify-center
+                bg-fixed bg-center bg-cover min-h-screen transition-all duration-700"
+                style={{ backgroundImage: `url(${bgDefault})` }}
+            >
+                {/* Слой размытия и затемнения */}
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-lg"></div>
+
+                {/* Сам текст (поверх размытия) */}
+                <h2 className="relative z-10 text-4xl">Get the weather...</h2>
+            </div>
+        )
+    }
+
+
+    if (hasError) {
+        return (
+            <div
+                className="relative w-full h-full box-border flex flex-col items-center justify-center gap-4
+                bg-fixed bg-center bg-cover min-h-screen transition-all duration-700"
+                style={{ backgroundImage: `url(${bgDefault})` }}
+            >
+                {/* Слой размытия и затемнения */}
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-xl"></div>
+
+                {/* Элементы ошибки (поверх размытия) */}
+                <h2 className="relative z-10 text-red-500 text-4xl font-bold">Download error</h2>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="relative z-10 bg-white/20 hover:bg-white/30 text-white px-8 py-3 rounded-xl backdrop-blur-md transition-colors font-medium"
+                >
+                    Try Again
+                </button>
+            </div>
+        )
+    }
+
+    const getBackgroundImage = () => {
+        if (!weather) return `url(${bgDefault})`;
+
+        const temp = weather.temperature_2m;
+        const isDay = weather.is_day; // 1 = День, 0 = Ночь
+        const currentMonth = new Date().getMonth(); // от 0 до 11
+
+        // Определяем сезоны (Грубая прикидка по месяцам)
+        const isWinter = currentMonth === 11 || currentMonth === 0 || currentMonth === 1; // Декабрь, Янв, Фев
+        const isSpring = currentMonth >= 2 && currentMonth <= 4; // Март, Апр, Май
+        const isAutumn = currentMonth >= 8 && currentMonth <= 10; // Сен, Окт, Ноя
+
+        // ЖЕСТКАЯ ЗИМА (холодно в любой сезон или именно зимние месяцы)
+        if (temp < -10 || isWinter) {
+            if (isDay === 1) return `url(${bgDayWinter})`;
+            if (isDay === 0) return `url(${bgNightWinter})`;
+        }
+
+        // ВЕСНА
+        if (isSpring) {
+            if (isDay === 1) return `url(${bgDaySpring})`;
+            if (isDay === 0) return `url(${bgNightSpring})`;
+        }
+
+        // ОСЕНЬ
+        if ((temp < 10 || temp > -10) && isAutumn) {
+            if (isDay === 1) return `url(${bgDayAutumn})`; // Подставь свою дневную осеннюю
+            if (isDay === 0) return `url(${bgNightAutumn})`; // Подставь свою ночную осеннюю
+        }
+
+        // ЛЕТО (Тепло или летние месяцы)
+        if (isDay === 1) return `url(${bgDaySummer})`; // Летний день
+        if (isDay === 0) return `url(${bgNightSummer})`; // Подставь Летнюю НОЧЬ, у тебя тут зима стоит!
+
+        return `url(${bgDefault})`; // Запасной фон
+    };
+
+
+    return (
+        <>
+            {hasErrorCity && (
+                <div className="absolute top-2 left-2 xl:right-4 bg-red-500 p-2 rounded-lg z-50">
+                    Your city not found!
+                    <br/>
+                    Showing the previous.
+                </div>
+            )}
+            <div className="w-full h-full box-border xl:pl-29 flex flex-col xl:flex-row items-start xl:items-end justify-end xl:justify-between bg-fixed bg-center bg-cover min-h-screen"
+                style={{ backgroundImage: getBackgroundImage() }}>
+                <WeatherDisplay weather={weather} city={city} />
+                <SearchBar onSearch={fetchWeather} />
+            </div>
+        </>
+    )
+}
+
+export default App
