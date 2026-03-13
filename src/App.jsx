@@ -108,7 +108,7 @@ function App() {
                 style={{ backgroundImage: defaultBackground }}
             >
                 <div className="absolute inset-0 bg-black/30 backdrop-blur-lg"></div>
-                <h2 className="relative z-10 text-4xl">Get the weather...</h2>
+                <h2 className="relative z-10 text-4xl text-white/90">Get the weather...</h2>
             </div>
         )
     }
