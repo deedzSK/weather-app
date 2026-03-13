@@ -58,8 +58,47 @@ function App() {
             })
     }
 
+    // Загрузка погоды по координатам (для геолокации)
+    const fetchWeatherByCoords = (lat, long) => {
+        setIsLoading(true);
+
+        // Запрашиваем погоду и название города параллельно
+        const weatherPromise = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m,is_day,wind_speed_10m,weathercode`)
+            .then(res => res.json());
+
+        const cityPromise = fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${long}&localityLanguage=en`)
+            .then(res => res.json());
+
+        Promise.all([weatherPromise, cityPromise])
+            .then(([weatherData, geoData]) => {
+                setWeather(weatherData.current);
+                setCity(geoData.city || geoData.locality || "My Location");
+                setIsLoading(false);
+                setBackgroundImage(getRandomBackground());
+            })
+            .catch(error => {
+                console.log("Ошибка геолокации:", error);
+                setHasError(true);
+                setIsLoading(false);
+            });
+    }
+
     useEffect(() => {
-        fetchWeather("Moscow");
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Пользователь разрешил — грузим по его координатам
+                    fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
+                },
+                () => {
+                    // Пользователь отказал — грузим Москву
+                    fetchWeather("Moscow");
+                }
+            );
+        } else {
+            // Браузер не поддерживает геолокацию
+            fetchWeather("Moscow");
+        }
     }, []);
 
     if (isLoading) {

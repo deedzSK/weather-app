@@ -11,7 +11,7 @@ export function WeatherDisplay ({ weather, city }) {
     return (
         <div>
             <div className="px-4 py-2 mb-30.5 hidden xl:flex items-end gap-2.5 bg-black/30 backdrop-blur-sm rounded-2xl">
-                <h1 className="text-[143px] leading-none -mb-2 -mt-4">{weather.temperature_2m}°</h1>
+                <h1 className="text-[143px] leading-none -mb-3 -mt-4">{weather.temperature_2m}°</h1>
                 <div className="weather-info flex flex-col gap-2.5">
                     <h3 className="text-[60px] leading-none">{city}</h3>
                     <p className="text-[18px] leading-none mb-2">{formattedTime} - {finalDateStr}</p>
