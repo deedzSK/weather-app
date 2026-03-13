@@ -19,33 +19,54 @@ const getSeason = () => {
     return 'autumn';
 };
 
+// Вспомогательная функция для извлечения URL из модуля Vite
+const extractUrl = (mod) => {
+    if (typeof mod === 'string') return mod;
+    if (mod && mod.default && typeof mod.default === 'string') return mod.default;
+    return null;
+};
+
 export const getRandomBackground = () => {
     const season = getSeason();
     const timeOfDay = getTimeOfDay();
+    
+    const seasonSegment = `${season}/${timeOfDay}`;
+    const allSeasonsSegment = `all-seasons/${timeOfDay}`;
 
-    const seasonKey = `../bg-photo/${season}/${timeOfDay}/`;
-    const allSeasonsKey = `../bg-photo/all-seasons/${timeOfDay}/`;
-
+    // Собираем кандидатов, проверяя наличие URL и исключая Bliss
     const candidates = Object.entries(allImages)
-        .filter(([path]) => path.startsWith(seasonKey) || path.startsWith(allSeasonsKey))
-        .map(([, mod]) => mod.default);
+        .filter(([path]) => {
+            const isMatch = path.includes(seasonSegment) || path.includes(allSeasonsSegment);
+            return isMatch && !path.includes('default_bliss');
+        })
+        .map(([, mod]) => extractUrl(mod))
+        .filter(url => url !== null);
 
     if (candidates.length > 0) {
-        const randomIndex = Math.floor(Math.random() * candidates.length);
-        return `url(${candidates[randomIndex]})`;
+        return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
-    return `url(${bgDefault})`;
+    // Fallback: Любое фото кроме Bliss
+    const fallbackCandidates = Object.entries(allImages)
+        .filter(([path]) => !path.includes('default_bliss'))
+        .map(([, mod]) => extractUrl(mod))
+        .filter(url => url !== null);
+
+    if (fallbackCandidates.length > 0) {
+        return fallbackCandidates[Math.floor(Math.random() * fallbackCandidates.length)];
+    }
+
+    return bgDefault;
 };
 
-export const defaultBackground = `url(${bgDefault})`;
+export const defaultBackground = bgDefault;
 
-// Предзагрузка картинки — показываем только когда она готова
 export const preloadImage = (url) => {
+    if (!url) return Promise.resolve(bgDefault);
     return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => resolve(url);
-        img.onerror = () => resolve(`url(${bgDefault})`);
+        img.onerror = () => resolve(bgDefault);
         img.src = url;
     });
 };

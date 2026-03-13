@@ -17,7 +17,7 @@ export function WeatherDisplay({ weather, city }) {
                 <h1 className="text-[143px] leading-none -mb-3 -mt-4">{weather.temperature_2m}°</h1>
                 <div className="weather-info flex flex-col gap-1.5">
                     <h3 className="text-[48px] leading-none">{city}</h3>
-                    <p className="text-[16px] leading-non">{formattedTime} - {finalDateStr}</p>
+                    <p className="text-[16px] leading-none">{formattedTime} - {finalDateStr}</p>
                     <p className="text-[20px] leading-none mb-2">Feels like {weather.apparent_temperature}°</p>
                 </div>
                 <WeatherIcon code={weather.weathercode} size={70} className="mb-0.5" />

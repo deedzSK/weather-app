@@ -13,7 +13,7 @@ function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
     const [hasErrorCity, setHasErrorCity] = useState(false);
-    const [backgroundImage, setBackgroundImage] = useState(null);
+    const [backgroundImage, setBackgroundImage] = useState(getRandomBackground());
     const [hourlyForecast, setHourlyForecast] = useState(null);
 
     // Загрузка погоды по названию города
@@ -42,9 +42,12 @@ function App() {
                 setWeather(data.current);
                 setHourlyForecast(data.hourly);
                 setIsLoading(false);
-                const bgUrl = getRandomBackground();
-                const rawUrl = bgUrl.slice(4, -1); // убираем url(...)
-                preloadImage(rawUrl).then(() => setBackgroundImage(bgUrl));
+                // Если это не первый запуск (уже был город), обновляем фон.
+                // На первом запуске оставляем тот, что в useState.
+                if (weather) {
+                    const bgUrl = getRandomBackground();
+                    preloadImage(bgUrl).then(() => setBackgroundImage(bgUrl));
+                }
             })
             .catch(error => {
                 console.log("Ошибка:", error);
@@ -74,9 +77,12 @@ function App() {
                 setHourlyForecast(weatherData.hourly);
                 setCity(geoData.city || geoData.locality || "My Location");
                 setIsLoading(false);
-                const bgUrl = getRandomBackground();
-                const rawUrl = bgUrl.slice(4, -1);
-                preloadImage(rawUrl).then(() => setBackgroundImage(bgUrl));
+                // Для координат (который обычно срабатывает на старте)
+                // тоже не меняем фон сразу, чтобы не было "пролета".
+                if (weather) {
+                    const bgUrl = getRandomBackground();
+                    preloadImage(bgUrl).then(() => setBackgroundImage(bgUrl));
+                }
             })
             .catch(error => {
                 console.log("Error geolocation:", error);
@@ -84,6 +90,16 @@ function App() {
                 setIsLoading(false);
             });
     }
+
+    useEffect(() => {
+        // Интервал для смены фона каждые 3 минуты
+        const bgInterval = setInterval(() => {
+            const bgUrl = getRandomBackground();
+            preloadImage(bgUrl).then(() => setBackgroundImage(bgUrl));
+        }, 180000); // 3 минуты
+
+        return () => clearInterval(bgInterval);
+    }, []);
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -104,8 +120,8 @@ function App() {
         return (
             <div
                 className="relative w-full h-full box-border flex items-center justify-center
-                bg-fixed bg-center bg-cover min-h-screen transition-all duration-700"
-                style={{ backgroundImage: defaultBackground }}
+                bg-fixed bg-center bg-cover min-h-screen transition-all duration-1000 ease-in-out"
+                style={{ backgroundImage: `url("${backgroundImage}")` }}
             >
                 <div className="absolute inset-0 bg-black/30 backdrop-blur-lg"></div>
                 <h2 className="relative z-10 text-4xl text-white/90">Get the weather...</h2>
@@ -117,8 +133,8 @@ function App() {
         return (
             <div
                 className="relative w-full h-full box-border flex flex-col items-center justify-center gap-4
-                bg-fixed bg-center bg-cover min-h-screen transition-all duration-700"
-                style={{ backgroundImage: defaultBackground }}
+                bg-fixed bg-center bg-cover min-h-screen transition-all duration-1000 ease-in-out"
+                style={{ backgroundImage: `url("${backgroundImage}")` }}
             >
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-xl"></div>
                 <h2 className="relative z-10 text-red-500 text-4xl font-bold">Download error</h2>
@@ -139,8 +155,8 @@ function App() {
                     Город не найден! Показываю предыдущий.
                 </div>
             )}
-            <div className="w-full h-full box-border xl:pl-29 flex flex-col xl:flex-row items-start xl:items-end justify-end xl:justify-between bg-center bg-cover min-h-screen"
-                style={{ backgroundImage: backgroundImage || defaultBackground }}>
+            <div className="w-full h-full box-border xl:pl-29 flex flex-col xl:flex-row items-start xl:items-end justify-end xl:justify-between bg-center bg-cover min-h-screen transition-all duration-1000 ease-in-out"
+                style={{ backgroundImage: `url("${backgroundImage}")` }}>
                 <SearchBarMobile onSearch={fetchWeather} />
                 <WeatherDisplay weather={weather} city={city} />
                 <HoursInfo onSearch={fetchWeather} hourlyForecast={hourlyForecast} />
