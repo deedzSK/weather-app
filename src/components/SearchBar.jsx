@@ -94,7 +94,7 @@ export function SearchBar({ onSearch, hourlyForecast }) {
                                     <div key={i} className="flex flex-col items-center gap-1 min-w-[60px]">
                                         <p className="text-sm">{item.time.split('T')[1]}</p>
                                         <WeatherIcon code={item.weathercode} size={28} />
-                                        <p className="text-sm font-medium">{item.temperature}°</p>
+                                        <p className="text-sm font-medium ml-1">{item.temperature}°</p>
                                     </div>
                                 ));
                         })()}
