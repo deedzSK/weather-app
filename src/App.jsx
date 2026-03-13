@@ -139,7 +139,7 @@ function App() {
                     Город не найден! Показываю предыдущий.
                 </div>
             )}
-            <div className="w-full h-full box-border xl:pl-29 flex flex-col xl:flex-row items-start xl:items-end justify-end xl:justify-between bg-fixed bg-center bg-cover min-h-screen"
+            <div className="w-full h-full box-border xl:pl-29 flex flex-col xl:flex-row items-start xl:items-end justify-end xl:justify-between bg-center bg-cover min-h-screen"
                 style={{ backgroundImage: backgroundImage || defaultBackground }}>
                 <SearchBarMobile onSearch={fetchWeather} />
                 <WeatherDisplay weather={weather} city={city} />
