@@ -3,6 +3,9 @@ import { WeatherDisplay } from "./components/WeatherDisplay.jsx";
 import { SearchBar } from "./components/SearchBar.jsx";
 import { getRandomBackground, defaultBackground } from "./utils/getBackground.js";
 
+const DEFAULT_LAT = 55.697108;
+const DEFAULT_LONG = 37.578585;
+
 function App() {
     const [city, setCity] = useState("Moscow");
     const [weather, setWeather] = useState(null);
@@ -11,58 +14,49 @@ function App() {
     const [hasErrorCity, setHasErrorCity] = useState(false);
     const [backgroundImage, setBackgroundImage] = useState(null);
 
+    // Загрузка погоды по названию города
     const fetchWeather = (searchQuery) => {
         setIsLoading(true);
 
         fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${searchQuery}&count=1&language=en&format=json`)
             .then(res => {
-                if (!res.ok) {
-                    throw Error('Error geolocation');
-                }
-                return res.json()
+                if (!res.ok) throw Error('Error geolocation');
+                return res.json();
             })
             .then(geoData => {
                 if (!geoData.results || geoData.results.length === 0) {
-                    throw new Error('City not found');
+                    throw Error('City not found');
                 }
-
                 const lat = geoData.results[0].latitude;
                 const long = geoData.results[0].longitude;
-
                 return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m,is_day,wind_speed_10m,weathercode`);
             })
             .then(res => {
-                if (!res.ok) {
-                    throw new Error('Ошибка HTTP: ' + res.status);
-                }
-                return res.json()
+                if (!res.ok) throw new Error('HTTP error: ' + res.status);
+                return res.json();
             })
             .then(data => {
-                console.log(data);
                 setCity(searchQuery);
                 setWeather(data.current);
                 setIsLoading(false);
                 setBackgroundImage(getRandomBackground());
             })
             .catch(error => {
-                console.log("Поймали ошибку:", error);
+                console.log("Ошибка:", error);
                 if (error.message === 'City not found') {
                     setHasErrorCity(true);
-                    setTimeout(() => {
-                        setHasErrorCity(false)
-                    }, 2000);
+                    setTimeout(() => setHasErrorCity(false), 3000);
                 } else {
                     setHasError(true);
                 }
                 setIsLoading(false);
-            })
+            });
     }
 
-    // Загрузка погоды по координатам (для геолокации)
+    // Загрузка погоды по координатам
     const fetchWeatherByCoords = (lat, long) => {
         setIsLoading(true);
 
-        // Запрашиваем погоду и название города параллельно
         const weatherPromise = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m,is_day,wind_speed_10m,weathercode`)
             .then(res => res.json());
 
@@ -87,17 +81,14 @@ function App() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    // Пользователь разрешил — грузим по его координатам
                     fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
                 },
                 () => {
-                    // Пользователь отказал — грузим Москву
-                    fetchWeather("Moscow");
+                    fetchWeatherByCoords(DEFAULT_LAT, DEFAULT_LONG);
                 }
             );
         } else {
-            // Браузер не поддерживает геолокацию
-            fetchWeather("Moscow");
+            fetchWeatherByCoords(DEFAULT_LAT, DEFAULT_LONG);
         }
     }, []);
 
@@ -136,10 +127,8 @@ function App() {
     return (
         <>
             {hasErrorCity && (
-                <div className="absolute top-2 left-2 xl:right-4 bg-red-500 p-2 rounded-lg z-50">
-                    Your city not found!
-                    <br />
-                    Showing the previous.
+                <div className="absolute top-4 right-4 bg-red-500 text-white p-3 rounded-lg z-50">
+                    Город не найден! Показываю предыдущий.
                 </div>
             )}
             <div className="w-full h-full box-border xl:pl-29 flex flex-col xl:flex-row items-start xl:items-end justify-end xl:justify-between bg-fixed bg-center bg-cover min-h-screen"
@@ -152,4 +141,3 @@ function App() {
 }
 
 export default App
-
