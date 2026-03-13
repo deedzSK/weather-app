@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { WeatherDisplay } from "./components/WeatherDisplay.jsx";
-import { SearchBar } from "./components/SearchBar.jsx";
+import { HoursInfo } from "./components/HoursInfo.jsx";
 import { getRandomBackground, defaultBackground, preloadImage } from "./utils/getBackground.js";
 import { SearchBarMobile } from "./components/SearchBarMobile.jsx";
 
@@ -143,7 +143,7 @@ function App() {
                 style={{ backgroundImage: backgroundImage || defaultBackground }}>
                 <SearchBarMobile onSearch={fetchWeather} />
                 <WeatherDisplay weather={weather} city={city} />
-                <SearchBar onSearch={fetchWeather} hourlyForecast={hourlyForecast} />
+                <HoursInfo onSearch={fetchWeather} hourlyForecast={hourlyForecast} />
             </div>
         </>
     )

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { WeatherCard } from "./WeatherCard.jsx";
 import { WeatherIcon } from "./WeatherIcon.jsx";
 
-export function SearchBar({ onSearch, hourlyForecast }) {
+export function HoursInfo({ onSearch, hourlyForecast }) {
     // Локальный стейт для хранения того, что пользователь вводит прямо сейчас
     const [inputValue, setInputValue] = useState('');
 
@@ -20,7 +20,7 @@ export function SearchBar({ onSearch, hourlyForecast }) {
     };
 
     return (
-        <div className="w-full xl:w-auto h-[50vh] md:h-[30vh] xl:h-auto">
+        <div className="w-full xl:w-auto h-[43vh] md:h-[30vh] xl:h-auto">
             {/* Десктоп версия */}
             <div className="hidden xl:flex h-dvh">
                 <div className="w-1 h-full bg-gray-400/50"></div>
