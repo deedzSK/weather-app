@@ -23,10 +23,10 @@ export function WeatherDisplay({ weather, city }) {
                 <WeatherIcon code={weather.weathercode} size={70} className="mb-0.5" />
             </div>
             {/* Мобилка */}
-            <div className="px-1 sm:px-4 py-2 ml-5.5 sm:ml-9.75 mb-7.5 sm:mb-20.25 flex xl:hidden items-end gap-2.5 bg-black/30 backdrop-blur-sm rounded-2xl">
-                <h1 className="text-[64px] sm:text-[120px] leading-none -mb-0.5 -mt-3">{weather.temperature_2m}°</h1>
+            <div className="px-1 sm:px-4 py-2 ml-5.5 sm:ml-9.75 mb-7.5 sm:mb-20.25 flex xl:hidden items-end gap-1.5 sm:gap-2.5 bg-black/30 backdrop-blur-sm rounded-2xl">
+                <h1 className="text-[61px] sm:text-[120px] leading-none -mb-0.5 -mt-3">{weather.temperature_2m}°</h1>
                 <div className="weather-info flex flex-col gap-1.5 sm:gap-2">
-                    <h3 className="text-[20px] sm:text-[44px] leading-none">{city}</h3>
+                    <h3 className="text-[17px] sm:text-[44px] leading-none">{city}</h3>
                     <p className="text-[13px] sm:text-[17px] leading-none">{formattedTime} - {finalDateStr}</p>
                     <p className="text-[13px] sm:text-[19px] leading-none sm:mb-2 text-white/70">Feels like {weather.apparent_temperature}°</p>
                 </div>
