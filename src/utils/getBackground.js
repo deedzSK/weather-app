@@ -39,3 +39,13 @@ export const getRandomBackground = () => {
 };
 
 export const defaultBackground = `url(${bgDefault})`;
+
+// Предзагрузка картинки — показываем только когда она готова
+export const preloadImage = (url) => {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(url);
+        img.onerror = () => resolve(`url(${bgDefault})`);
+        img.src = url;
+    });
+};

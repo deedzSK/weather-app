@@ -50,6 +50,7 @@ export function WeatherIcon({ code, size = 70, className = "" }) {
             width={size}
             height={size}
             className={className}
+            loading="lazy"
         />
     );
 }

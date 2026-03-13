@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { WeatherDisplay } from "./components/WeatherDisplay.jsx";
 import { SearchBar } from "./components/SearchBar.jsx";
-import { getRandomBackground, defaultBackground } from "./utils/getBackground.js";
+import { getRandomBackground, defaultBackground, preloadImage } from "./utils/getBackground.js";
+import { SearchBarMobile } from "./components/SearchBarMobile.jsx";
 
 const DEFAULT_LAT = 55.697108;
 const DEFAULT_LONG = 37.578585;
@@ -13,6 +14,7 @@ function App() {
     const [hasError, setHasError] = useState(false);
     const [hasErrorCity, setHasErrorCity] = useState(false);
     const [backgroundImage, setBackgroundImage] = useState(null);
+    const [hourlyForecast, setHourlyForecast] = useState(null);
 
     // Загрузка погоды по названию города
     const fetchWeather = (searchQuery) => {
@@ -29,7 +31,7 @@ function App() {
                 }
                 const lat = geoData.results[0].latitude;
                 const long = geoData.results[0].longitude;
-                return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m,is_day,wind_speed_10m,weathercode`);
+                return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m,apparent_temperature,is_day,wind_speed_10m,weathercode&hourly=temperature_2m,weathercode`);
             })
             .then(res => {
                 if (!res.ok) throw new Error('HTTP error: ' + res.status);
@@ -38,8 +40,11 @@ function App() {
             .then(data => {
                 setCity(searchQuery);
                 setWeather(data.current);
+                setHourlyForecast(data.hourly);
                 setIsLoading(false);
-                setBackgroundImage(getRandomBackground());
+                const bgUrl = getRandomBackground();
+                const rawUrl = bgUrl.slice(4, -1); // убираем url(...)
+                preloadImage(rawUrl).then(() => setBackgroundImage(bgUrl));
             })
             .catch(error => {
                 console.log("Ошибка:", error);
@@ -57,7 +62,7 @@ function App() {
     const fetchWeatherByCoords = (lat, long) => {
         setIsLoading(true);
 
-        const weatherPromise = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m,is_day,wind_speed_10m,weathercode`)
+        const weatherPromise = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m,apparent_temperature,is_day,wind_speed_10m,weathercode&hourly=temperature_2m,weathercode`)
             .then(res => res.json());
 
         const cityPromise = fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${long}&localityLanguage=en`)
@@ -66,12 +71,15 @@ function App() {
         Promise.all([weatherPromise, cityPromise])
             .then(([weatherData, geoData]) => {
                 setWeather(weatherData.current);
+                setHourlyForecast(weatherData.hourly);
                 setCity(geoData.city || geoData.locality || "My Location");
                 setIsLoading(false);
-                setBackgroundImage(getRandomBackground());
+                const bgUrl = getRandomBackground();
+                const rawUrl = bgUrl.slice(4, -1);
+                preloadImage(rawUrl).then(() => setBackgroundImage(bgUrl));
             })
             .catch(error => {
-                console.log("Ошибка геолокации:", error);
+                console.log("Error geolocation:", error);
                 setHasError(true);
                 setIsLoading(false);
             });
@@ -133,8 +141,9 @@ function App() {
             )}
             <div className="w-full h-full box-border xl:pl-29 flex flex-col xl:flex-row items-start xl:items-end justify-end xl:justify-between bg-fixed bg-center bg-cover min-h-screen"
                 style={{ backgroundImage: backgroundImage || defaultBackground }}>
+                <SearchBarMobile onSearch={fetchWeather} />
                 <WeatherDisplay weather={weather} city={city} />
-                <SearchBar onSearch={fetchWeather} />
+                <SearchBar onSearch={fetchWeather} hourlyForecast={hourlyForecast} />
             </div>
         </>
     )
