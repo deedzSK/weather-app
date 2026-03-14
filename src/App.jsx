@@ -17,8 +17,8 @@ function App() {
     const [hourlyForecast, setHourlyForecast] = useState(null);
 
     // Загрузка погоды по названию города
-    const fetchWeather = (searchQuery) => {
-        setIsLoading(true);
+    const fetchWeather = (searchQuery, isSilent = false) => {
+        if (!isSilent) setIsLoading(true);
 
         fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${searchQuery}&count=1&language=en&format=json`)
             .then(res => {
@@ -54,7 +54,7 @@ function App() {
                 if (error.message === 'City not found') {
                     setHasErrorCity(true);
                     setTimeout(() => setHasErrorCity(false), 3000);
-                } else {
+                } else if (!isSilent) {
                     setHasError(true);
                 }
                 setIsLoading(false);
@@ -62,8 +62,8 @@ function App() {
     }
 
     // Загрузка погоды по координатам
-    const fetchWeatherByCoords = (lat, long) => {
-        setIsLoading(true);
+    const fetchWeatherByCoords = (lat, long, isSilent = false) => {
+        if (!isSilent) setIsLoading(true);
 
         const weatherPromise = fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m,apparent_temperature,is_day,wind_speed_10m,weathercode&hourly=temperature_2m,weathercode`)
             .then(res => res.json());
@@ -86,7 +86,7 @@ function App() {
             })
             .catch(error => {
                 console.log("Error geolocation:", error);
-                setHasError(true);
+                if (!isSilent) setHasError(true);
                 setIsLoading(false);
             });
     }
@@ -98,8 +98,18 @@ function App() {
             preloadImage(bgUrl).then(() => setBackgroundImage(bgUrl));
         }, 180000); // 3 минуты
 
-        return () => clearInterval(bgInterval);
-    }, []);
+        // Интервал для обновления данных о погоде каждые 3 минуты (тихий режим)
+        const weatherInterval = setInterval(() => {
+            if (city) {
+                fetchWeather(city, true);
+            }
+        }, 180000); // 3 минуты
+
+        return () => {
+            clearInterval(bgInterval);
+            clearInterval(weatherInterval);
+        };
+    }, [city]);
 
     useEffect(() => {
         if (navigator.geolocation) {
